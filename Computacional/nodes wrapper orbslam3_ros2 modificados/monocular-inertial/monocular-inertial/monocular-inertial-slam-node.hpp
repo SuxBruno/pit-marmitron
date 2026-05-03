@@ -4,6 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/msg/imu.hpp"
+#include "geometry_msgs/msg/Transform.h"
 
 #include <cv_bridge/cv_bridge.hpp>
 
@@ -16,6 +17,11 @@
 
 using ImuMsg = sensor_msgs::msg::Imu;
 using ImageMsg = sensor_msgs::msg::Image;
+using TfMsg = geometry_msgs::msg::TransformStamped;
+using PclMsg = sensor_msgs::msg::PointCloud2;
+
+#TODO: Integrar Tf2 pra publicar tfs e receber tfs pelos tf2_transform_publisher, tf2_static_transform_publisher, etc.
+#Inclusive pra que seja melhor integrar todas as transforms pra suprir as transforms necessárias pelo nav2 em outro módulo.
 
 class MonocularInertialSlamNode : public rclcpp::Node
 {
@@ -27,12 +33,15 @@ public:
 private:
 
     void GrabImage(const ImageMsg::SharedPtr msg);
-    void GrabImu(const ImuMsg::SharedPtr msg)
+    void GrabImu(const ImuMsg::SharedPtr msg);
+    cv::Mat GetImage(const ImageMsg::SharedPtr msg);
+    Sophus::SE3f SyncWithImu_Track(); //retorna o resultado do tracking do orbslam3, após sincronizar a imagem e o imu
+    TfMsg MakeTfMsg(const Sophus::SE3f Tcm); //inverte transformação e monta mensagem de tf para publição
+    void timer_callback();
 
-    void SyncWithImu();
 
     ORB_SLAM3::System* m_SLAM;
-    std::thread *syncThread_;
+    std::thread *syncThread_; //inicia thread para sincronizar
 
     //IMU buffer pointer
     queue<ImuMsg::SharedPtr> imuBuf_;
@@ -42,8 +51,17 @@ private:
     queue<ImageMsg::SharedPtr> imgBuf_; 
     std::mutex bufImgMutex_;
 
+    //Transform buffer pointer
+    queue<TfMsg::SharedPtr> tfBuf_;
+    std::mutex bufTfMutex_;
+
+    //Define subscribers:
     rclcpp::Subscription<ImageMsg>::SharedPtr m_image_subscriber;
     rclcpp::Subscription<ImuMsg>::SharedPtr imu_subscriber;
+
+    //Define publishers:
+    rclcpp::Publisher<TfMsg>::SharedPtr twc_publisher; //publisher pra publicar a transformação map => camera (fixa em relação ao base_link)
+    rclcpp::Publisher<PclMsg>::SharedPtr pointcloud_publisher; //publisher para publicar pointclouds derivadas dos features detectados TODO: É informação útil?
 
     //Não entendi bem o que são esses bools:
     bool doRectify_;

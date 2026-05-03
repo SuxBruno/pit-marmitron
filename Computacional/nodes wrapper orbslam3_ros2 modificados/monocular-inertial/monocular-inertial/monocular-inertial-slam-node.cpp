@@ -18,6 +18,21 @@ MonocularInertialSlamNode::MonocularInertialSlamNode(ORB_SLAM3::System* pSLAM)
         "imu",
         1000,
         std::bind(&MonocularInertialSlamNode::GrabImu, this, std::placeholders::_1));
+    );
+
+    twc_publisher = this->create_publisher<TfMsg>(
+        "tf",
+        10
+    );
+
+    pcl_publisher = this->create_publisher<PclMsg>(
+        "PCLTOPIC"
+        10
+    );
+
+    timer_ = this->create_wall_timer(
+        20ms,
+        std::bind(&MonocularInertialSlamNode::timer_callback, this) // o timer_ é chamado pelo node::spin() e ta bindado com o método timer_callback
     )
 
     syncThread_ = new std::thread(&StereoInertialNode::SyncWithImu, this);
@@ -53,7 +68,7 @@ void MonocularInertialSlamNode::GrabImage(const ImageMsg::SharedPtr msg)
     bufImgMutex_.lock();
 }
 
-void MonocularInertialSlamNode::GetImage(const ImageMsg::SharedPtr msg)
+cv::Mat MonocularInertialSlamNode::GetImage(const ImageMsg::SharedPtr msg)
 {
 
     // Copy the ros image message to cv::Mat.
@@ -84,7 +99,7 @@ void MonocularInertialSlamNode::GetImage(const ImageMsg::SharedPtr msg)
     */
 }
 
-void MonocularInertialSlamNode::SyncWithImu()
+Sophus::SE3f MonocularInertialSlamNode::SyncWithImu_Track()
 {   
     
     while(1) //Sempre rodando, i guess
@@ -114,10 +129,47 @@ void MonocularInertialSlamNode::SyncWithImu()
             }
         }
         bufMutex_.unlock();
+        
+        Sophus::SE3f curr_Tf;
+        curr_Tf = m_SLAM->TrackMonocular(Img, tImg, vImuMeas);
 
-        m_SLAM->TrackMonocular(Img, tImg, vImuMeas);
-
+        bufTfMutex_.lock(); //Coloca uma tf coletada no buffer
+        tfBuf_.push(curr_Tf);
+        bufTfMutex_.unlock();
         //TODO: Talvez precise colocar um sleep igual o q tem em stereo-inertial.
 
     }
+}
+
+TfMsg MonocularInertialSlamNode::MakeTfMsg(const Sophus::SE3f::SharedPtr Tcm)
+{
+    Sophus::SE3f Tmc = Tcm.inverse();
+    TfMsg transf_msg;
+
+    transf_msg.transform.rotation.x = Tmc.translation().x();
+    transf_msg.transform.rotation.y = Tmc.translation().y();
+    transf_msg.transform.rotation.z = Tmc.translation().z();
+
+    transf_msg.transform.orientation.w = Tmc.unit_quaternion().coeffs().w();
+    transf_msg.transform.orientation.x = Tmc.unit_quaternion().coeffs().x();
+    transf_msg.transform.orientation.y = Tmc.unit_quaternion().coeffs().y();
+    transf_msg.transform.orientation.z = Tmc.unit_quaternion().coeffs().z();
+
+    transf_msg.frame_id = "map";
+    transf_msg.child_frame_id = "camera";
+    return transf_msg;
+}
+
+void MonocularInertialSlamNode::timer_callback()
+{
+    Sophus::SE3f::SharedPtr Tf_;
+    TfMsg msg;
+
+    bufTfMutex.lock(); //copiei a estratégia buffer e lock com mutex
+    Tf_ = tfBuf_.front();
+    msg = MakeTfMsg(Tf_);
+    tfBuf_.pop();
+    bufTfMutex_.unlock();
+
+    tf_publisher->publish(msg);
 }
