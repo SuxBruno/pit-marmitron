@@ -50,8 +50,6 @@ void codigoTaskAccGyr(void * parameter) {
 }
 
 void codigoTaskMag(void * parameter) {
-  imu_init();
-
   for(;;) {
     mag_update();
     vTaskDelay((1000/FREQ_MAG_HZ) / portTICK_PERIOD_MS); // Roda a 100Hz exatos
