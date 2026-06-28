@@ -4,10 +4,10 @@
 // ==========================================
 // MPU9250 - BARRAMENTO VSPI
 // ==========================================
-constexpr uint8_t PIN_SPI_MOSI = 23; // SDA
-constexpr uint8_t PIN_SPI_MISO = 19; // AD0
-constexpr uint8_t PIN_SPI_SCK  = 18; // SCL
-constexpr uint8_t PIN_SPI_CS   = 5;  // NCS
+constexpr uint8_t PIN_SPI_MOSI = 16;//23; // SDA
+constexpr uint8_t PIN_SPI_MISO = 17;//19; // AD0
+constexpr uint8_t PIN_SPI_SCK  = 15;//18; // SCL
+constexpr uint8_t PIN_SPI_CS   = 18;//5;  // NCS
 
 // ==========================================
 // UBLOX NEO-6M - UART2

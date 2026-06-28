@@ -16,6 +16,7 @@ class PIDController {
     void setGanhos(float kp, float ki, float kd);
     void setSentido(int sentido);
     int controle(float vel_ref, float vel_filtrada);
+    void reset();
     // void setLimites(float min, float max);
     // float computar(float valor_alvo, float valor_atual);
 };

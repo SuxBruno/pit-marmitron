@@ -84,5 +84,5 @@ void sonar_update() {
 }
 
 void sonar_print_ros_format() {
-  Serial.println(distance_m, 4);
+  Serial.print(distance_m, 4);
 }

@@ -1,7 +1,7 @@
 #include "ctrl_velocidade.h"
 #include <Arduino.h>
 
-#define ENCODER_D_IN 27
+#define ENCODER_D_IN 34
 #define MOTOR1_R_PWM 32
 #define MOTOR1_L_PWM 33
 #define MOTOR1_R_EN 25
@@ -10,7 +10,7 @@
 // Variáveis leitura dos encoders
 float vel_medida;
 float vel_filtrada = 0; //rpm
-#define ALPHA  0.7 //alpha = tau/(tau+Ts), tau cte de tempo do filtro
+#define ALPHA  0.99 //alpha = tau/(tau+Ts), tau cte de tempo do filtro
 volatile unsigned long t_encoder, t_anterior_encoder, periodo_quarta_volta; //micros
 volatile int conta_encoder = 0;
 const unsigned long periodo_amostragem_vel = 100; //10 Hz
@@ -56,7 +56,7 @@ float zonaMorta(float sinal, float zona_morta){
 
 
 void ControleDeVelocidade_setup(motor* p_motor1) {
-  p_motor1->acionaMotor(40);
+  //p_motor1->acionaMotor(40);
   pinMode(ENCODER_D_IN, INPUT);
   attachInterrupt(digitalPinToInterrupt(ENCODER_D_IN), lerEncoderISR, CHANGE);
 
@@ -80,32 +80,16 @@ void ControleDeVelocidade_loop(motor* p_motor1, float vel_ref) {
   }
   Serial.print(">vel_medida:"); Serial.print(vel_medida);
   vel_filtrada = ALPHA*vel_filtrada + (1.0-ALPHA)*vel_medida; //Filtro passa baixas
-  Serial.print(",vel_filtrada: "); Serial.print(vel_filtrada);  Serial.print(",");
-  Serial.print(",periodo_quarta_volta"); Serial.print(periodo_quarta_volta);
-  Serial.print(",conta_encoder:"); Serial.print(conta_encoder);
+  Serial.print(",vel_filtrada: "); Serial.print(vel_filtrada);
+  Serial.print(",periodo_quarta_volta:"); Serial.println(periodo_quarta_volta);
+  //Serial.print(",conta_encoder:"); Serial.print(conta_encoder);
   
 
   // ==== Controle ==================================================================================================
   //=================================================================================================================
 
-  if (t-t0>500){
-    vel_ref = 50;
-    //pwm = 30;
-  }
-  if (t-t0>10000){
-    vel_ref = 100;
-    //pwm = 50;
-  }
-  if (t-t0>25000){
-    vel_ref = 300;
-    //pwm = 200;
-  }
-  if (t-t0>33000){
-    vel_ref = 200;
-    //pwm = 100;
-  }
   
-  Serial.print("vel_ref:"); Serial.print(vel_ref); Serial.print(",");
+  //Serial.print("vel_ref:"); Serial.print(vel_ref); Serial.print(",");
   t_controle = micros(); // Tempo atual em microsegundos
   deltat = (float) (t_controle - t_anterior)/1.0e6; //segundos
   //Serial.print("delta_t:"); Serial.print(deltat); Serial.print(",");
@@ -120,14 +104,14 @@ void ControleDeVelocidade_loop(motor* p_motor1, float vel_ref) {
 
   integral += erro*deltat; //Calcula a integral como uma soma de Riemann
   derivada = deltae/deltat; //Calcula derivada como variação média sobre período pequeno
-  Serial.print("integral:"); Serial.print(integral); Serial.print(",");
+  //Serial.print("integral:"); Serial.print(integral); Serial.print(",");
   //Serial.print("derivada:"); Serial.print(derivada); Serial.print(",");
 
   controle = KP*erro + KI*integral + KD*derivada; //Sinal de controle PID
   //Serial.print(",saida_PID:"); Serial.print(controle);
 
   pwm = (int) constrain(controle, 0, 255); //Projeta controle como inteiro sobre pwm
-  Serial.print(",pwm:"); Serial.println(pwm);
-  p_motor1->acionaMotor(sentido*pwm);
+  //Serial.print(",pwm:"); Serial.println(pwm);
+  //p_motor1->acionaMotor(sentido*pwm);
 
 }

@@ -40,7 +40,15 @@ int PIDController::controle(float vel_ref,float vel_filtrada){
   ultimo_tempo = tempo_agora;
   erro_anterior = erro;
 
+  //Serial.print(">vel_filtrada:");Serial.print(vel_filtrada);Serial.print(",vel_ref:");Serial.print(vel_ref);
+  //Serial.print(",integral:");Serial.print(this->erro_integral);Serial.print(",pwm:");Serial.print(pwm);
+  //Serial.print(",sinalPID:");Serial.println(saida);
   return Sentido*pwm;
+}
+
+void PIDController::reset(){
+  erro_integral = 0.0;
+  erro_anterior = 0.0;
 }
 
 // void PIDController::setLimites(float min, float max) {

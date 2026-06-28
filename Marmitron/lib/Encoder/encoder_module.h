@@ -13,6 +13,7 @@ class EncoderISR {
     volatile int conta_encoder;
 
     // Variáveis de memória do objeto
+    float vel_medida;
     float vel_filtrada;
     portMUX_TYPE mux; // Fechadura exclusiva para proteger os dados desta roda
 
@@ -29,6 +30,9 @@ class EncoderISR {
     // Liga o pino e a interrupção
     void init();
 
-    // Retorna o RPM já calculado, filtrado e com proteção contra travamento (Timeout)
+    // Retorna o RPM já calculado e com proteção contra travamento (Timeout)
     float lerVelocidadeRPM();
+
+    // Filtra a velocidade separadamente da medição
+    float filtraVelocidade();
 };

@@ -5,7 +5,8 @@
 #include <freertos/queue.h>
 
 // Importa a nossa caixa de correio criada lá no main.cpp!
-extern QueueHandle_t filaVelocidade;
+extern QueueHandle_t filaVelocidadeEsq;
+extern QueueHandle_t filaVelocidadeDir;
 
 // Cria o objeto do servidor na porta padrão HTTP (80)
 static AsyncWebServer server(80);
@@ -31,7 +32,7 @@ const char* html_page = R"rawliteral(
   <h1>Controle de Velocidade</h1>
   <p>Deslize para alterar a velocidade dos motores</p>
   
-  <input type="range" min="-5.0" max="5.0" step="0.1" value="0.0" class="slider" id="sliderVel" oninput="enviarVelocidade(this.value)">
+  <input type="range" min="-300.0" max="300.0" step="1.0" value="0.0" class="slider" id="sliderVel" oninput="enviarVelocidade(this.value)">
   
   <div class="valor">V: <span id="mostrador">0.0</span></div>
 
@@ -82,8 +83,9 @@ void webserver_init(const char* ssid, const char* password) {
       // MÁGICA DO FREERTOS AQUI:
       // Se a fila existe, "joga" o número float lá dentro para a Task de Motores pegar!
       // O "(TickType_t)0" significa: Não perca tempo esperando, jogue na fila e fuja.
-      if(filaVelocidade != NULL) {
-        xQueueSend(filaVelocidade, &nova_velocidade, (TickType_t)0);
+      if(filaVelocidadeEsq != NULL) {
+        xQueueSend(filaVelocidadeEsq, &nova_velocidade, (TickType_t)0);
+        xQueueSend(filaVelocidadeDir, &nova_velocidade, (TickType_t)0);
       }
     }
     // Responde ao navegador que deu tudo certo para ele não travar

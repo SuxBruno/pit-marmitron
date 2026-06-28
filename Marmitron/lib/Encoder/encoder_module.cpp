@@ -12,6 +12,7 @@ EncoderISR::EncoderISR(uint8_t pinA, float alpha_filtro) {
   this->periodo_quarta_volta = 0;
   this->conta_encoder = 0;
   
+  this->vel_medida = 0.0;
   this->vel_filtrada = 0.0;
   this->mux = portMUX_INITIALIZER_UNLOCKED;
 }
@@ -59,23 +60,29 @@ float EncoderISR::lerVelocidadeRPM() {
   periodo_copia = this->periodo_quarta_volta;
   t_ultimo_pulso = this->t_anterior_encoder;
   portEXIT_CRITICAL(&this->mux);
-
-  float vel_medida = 0.0;
-
+  //Serial.print(">periodo_copia:");Serial.print(periodo_copia);
+  //Serial.print(",periodo_quarta_volta:");Serial.print(this->periodo_quarta_volta);
+  //float vel_medida = 0.0;
   // Proteção do "Motor Parado" (Timeout de 200ms)
   if (t_agora - t_ultimo_pulso > 200000) {
-    vel_medida = 0.0;
+    this->vel_medida = 0.0;
     portENTER_CRITICAL(&this->mux);
     this->periodo_quarta_volta = 0;
     portEXIT_CRITICAL(&this->mux);
   } 
   // O seu cálculo de RPM (40 furos lidos a cada 10)
   else if (periodo_copia != 0) {
-    vel_medida = (float)60.0 * 1000000.0 / (4.0 * periodo_copia);
+    this->vel_medida = (float)60.0 * 1000000.0 / (4.0 * periodo_copia);
   }
 
   // O seu filtro passa-baixas
-  this->vel_filtrada = (this->alpha * this->vel_filtrada) + ((1.0 - this->alpha) * vel_medida);
+  //this->vel_filtrada = (this->alpha * this->vel_filtrada) + ((1.0 - this->alpha) * vel_medida);
+  
+  //Serial.print(",vel_medida:");Serial.print(vel_medida);Serial.print(",vel_filtrada:");Serial.println(vel_filtrada);
+  return this->vel_medida;
+}
 
+float EncoderISR::filtraVelocidade(){
+  this->vel_filtrada = (this->alpha * this->vel_filtrada) + ((1.0 - this->alpha) * this->vel_medida);
   return this->vel_filtrada;
 }
