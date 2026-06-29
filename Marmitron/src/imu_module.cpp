@@ -61,7 +61,15 @@ void accgyr_update() {
   uint32_t t = micros();
   xyzFloat gValue = myMPU9250.getGValues();
   xyzFloat gyrValue = myMPU9250.getGyrValues();
-
+  //float acx_offset = 0.35;
+  //float acy_offset = 0.35;
+  //float acz_offset = -1;
+  //float acx_escala = 1.006;
+  //float acy_escala = 1.006;
+  //float acz_escala = 0.991;
+  //float gyrx_offset = -0.04;
+  //float gyry_offset = 0.02;
+  //float gyrz_offset = 0.02;
   // 2. Converte para m/s²
   if (gValue.x == 0 && gValue.y == 0 && gValue.z == 0 && gyrValue.x == 0 && gyrValue.y == 0 && gyrValue.z == 0) {
     return;
@@ -70,14 +78,14 @@ void accgyr_update() {
   accgyr_timestamp_us = t;
   accgyr_seq += 1;
 
-  acc_x_ms2 = gValue.x * 9.80665;
-  acc_y_ms2 = gValue.y * 9.80665;
-  acc_z_ms2 = gValue.z * 9.80665;
+  acc_x_ms2 = (gValue.x * 9.80665)*acx_escala - acx_offset;
+  acc_y_ms2 = (gValue.y * 9.80665)*acy_escala - acy_offset;
+  acc_z_ms2 = (gValue.z * 9.80665)*acz_escala - acz_offset;
 
   // 3. Converte para rad/s (DEG_TO_RAD é nativo do Arduino)
-  gyr_x_rads = gyrValue.x * DEG_TO_RAD;
-  gyr_y_rads = gyrValue.y * DEG_TO_RAD;
-  gyr_z_rads = gyrValue.z * DEG_TO_RAD;
+  gyr_x_rads = (gyrValue.x * DEG_TO_RAD) - gyrx_offset;
+  gyr_y_rads = (gyrValue.y * DEG_TO_RAD) - gyry_offset;
+  gyr_z_rads = (gyrValue.z * DEG_TO_RAD) - gyrz_offset;
   portEXIT_CRITICAL(&muxImu);
 }
 
