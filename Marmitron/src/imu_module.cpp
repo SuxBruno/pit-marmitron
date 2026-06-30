@@ -61,15 +61,15 @@ void accgyr_update() {
   uint32_t t = micros();
   xyzFloat gValue = myMPU9250.getGValues();
   xyzFloat gyrValue = myMPU9250.getGyrValues();
-  //float acx_offset = 0.35;
-  //float acy_offset = 0.35;
-  //float acz_offset = -1;
-  //float acx_escala = 1.006;
-  //float acy_escala = 1.006;
-  //float acz_escala = 0.991;
-  //float gyrx_offset = -0.04;
-  //float gyry_offset = 0.02;
-  //float gyrz_offset = 0.02;
+  float acx_offset = 0.385;
+  float acy_offset = 0.32;
+  float acz_offset = -1.065;
+  float acx_escala = 1;
+  float acy_escala = 1;
+  float acz_escala = 1;
+  float gyrx_offset = -0.04;
+  float gyry_offset = 0.02;
+  float gyrz_offset = 0.02;
   // 2. Converte para m/s²
   if (gValue.x == 0 && gValue.y == 0 && gValue.z == 0 && gyrValue.x == 0 && gyrValue.y == 0 && gyrValue.z == 0) {
     return;
